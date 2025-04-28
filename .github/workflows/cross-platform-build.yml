@@ -51,8 +51,7 @@ jobs:
           cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
         fi
 
-    - name: Run tests
+    - name: Run monitor.py (cross-platform monitoring)
       shell: bash
       run: |
-          python3 monitor.py --duration 15
-      
+        python3 monitor.py --duration 15
