@@ -1,6 +1,22 @@
 import matplotlib.pyplot as plt
-import re
 import argparse
+import platform
+
+def parse_mem_field(field):
+    """Parse memory field from top output, e.g., 1.9M, 300K, 0B, or 123456 (assumed KB)."""
+    try:
+        if field.endswith("M"):
+            return float(field[:-1])
+        elif field.endswith("K"):
+            return float(field[:-1]) / 1024
+        elif field.endswith("G"):
+            return float(field[:-1]) * 1024
+        elif field.endswith("B"):
+            return 0.0
+        else:
+            return int(field) / 1024  # assume KB
+    except (ValueError, IndexError):
+        return 0.0
 
 def parse_top_output(log_file, process_name):
     memory_usage = []
@@ -13,11 +29,8 @@ def parse_top_output(log_file, process_name):
                 parts = line.split()
                 if len(parts) < 6:
                     continue
-                try:
-                    mem_kb = int(parts[5])
-                except ValueError:
-                    continue
-                memory_usage.append(mem_kb / 1024)
+                mem_mb = parse_mem_field(parts[5])
+                memory_usage.append(mem_mb)
                 timestamps.append(current_time)
                 current_time += 1
     return timestamps, memory_usage
