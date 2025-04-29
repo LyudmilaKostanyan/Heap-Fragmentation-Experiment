@@ -61,8 +61,8 @@ Example visual difference:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/username/Heap-Fragmentation-Simulation.git
-cd Heap-Fragmentation-Simulation
+git clone https://github.com/LyudmilaKostanyan/Heap-Fragmentation-Experiment.git
+cd Heap-Fragmentation-Experiment
 ```
 
 ---
@@ -125,4 +125,3 @@ python3 plot_log.py --log-file monitor_output.txt --output heap_plot.png
 ## Important Notes
 - **Fragmentation behavior varies across OSes**: macOS aggressively reuses memory, Linux allows more visible fragmentation.
 - **The program runs indefinitely**: it must be manually terminated if you want to stop it earlier (Ctrl+C).
-- **Graphs show memory usage but not fragmentation structure**: true fragmentation would require deeper heap analysis.
