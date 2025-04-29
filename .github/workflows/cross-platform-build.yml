@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           python3 monitor.py --duration 30 --executable ./build/main --log-file monitor_output.txt
-          python3 plot_log.py --log-file monitor_output.txt --process-name main --output heap_plot.png
+          python3 plot_log.py --log-file monitor_output.txt --output heap_plot.png
 
       - name: Upload heap fragmentation graphic
         uses: actions/upload-artifact@v4
