@@ -33,9 +33,13 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          sudo apt update || true
-          sudo apt install -y python3-pip procps || true
-          pip3 install matplotlib
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt update
+            sudo apt install -y python3-pip procps
+            pip3 install matplotlib
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            pip3 install matplotlib --break-system-packages
+          fi
 
       - name: Configure CMake
         shell: bash
@@ -50,17 +54,13 @@ jobs:
         run: |
           cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
 
-      - name: Run monitor.py
+      - name: Run
         shell: bash
         run: |
           python3 monitor.py --duration 20 --executable ./build/main --log-file monitor_output.txt
-
-      - name: Generate memory usage plot
-        shell: bash
-        run: |
           python3 plot_log.py --log-file monitor_output.txt --process-name main --output heap_plot.png
 
-      - name: Upload heap plot artifact
+      - name: Upload heap fragmentation graphic
         uses: actions/upload-artifact@v4
         with:
           name: heap-fragmentation-plot-${{ matrix.build.cpp_compiler }}-${{ runner.os }}
