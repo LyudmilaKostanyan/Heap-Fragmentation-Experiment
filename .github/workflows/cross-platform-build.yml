@@ -40,6 +40,7 @@ jobs:
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             pip3 install matplotlib --break-system-packages
           fi
+          python3 -m pip install psutil
 
       - name: Configure CMake
         shell: bash
@@ -57,7 +58,7 @@ jobs:
       - name: Run
         shell: bash
         run: |
-          python3 monitor.py --duration 60 --executable ./build/main --log-file monitor_output.txt
+          python3 monitor.py --duration 30 --executable ./build/main --log-file monitor_output.txt
           python3 plot_log.py --log-file monitor_output.txt --process-name main --output heap_plot.png
 
       - name: Upload heap fragmentation graphic

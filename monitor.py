@@ -1,79 +1,48 @@
 import subprocess
 import time
 import argparse
-import os
 import signal
-import platform
-
-def is_windows():
-    return platform.system().lower() == "windows"
-
-def is_macos():
-    return platform.system().lower() == "darwin"
+import psutil
 
 def main():
-    parser = argparse.ArgumentParser(description="Run monitor, wait 5s, then run heap fragmentation experiment.")
+    parser = argparse.ArgumentParser(description="Run monitor with psutil and run heap fragmentation experiment.")
     parser.add_argument("--duration", type=int, required=True, help="Total duration to run (seconds)")
     parser.add_argument("--executable", type=str, default="./build/main", help="Path to the executable")
-    parser.add_argument("--log-file", type=str, default=None, help="Optional: file to save monitor output")
+    parser.add_argument("--log-file", type=str, default="monitor_output.txt", help="File to save memory usage log")
     args = parser.parse_args()
-
-    if is_windows():
-        print("Starting Get-Process to monitor memory (Windows)...")
-        monitor_cmd = ["powershell", "-Command", "while ($true) { Get-Process | Out-String; Start-Sleep -Seconds 1 }"]
-    elif is_macos():
-        snapshots = max(args.duration, 1)
-        print(f"Starting top on macOS with {snapshots} snapshots...")
-        monitor_cmd = ["top", "-l", str(snapshots), "-s", "1"]
-    else:
-        print("Starting top to monitor memory (Linux)...")
-        if args.log_file:
-            monitor_cmd = ["top", "-b", "-d", "1"]
-        else:
-            monitor_cmd = ["top", "-d", "1"]
-
-    if args.log_file:
-        monitor_output = open(args.log_file, "w")
-        print(f"Monitor output will be saved to {args.log_file}")
-    else:
-        monitor_output = None
-
-    monitor_proc = subprocess.Popen(
-        monitor_cmd,
-        stdout=monitor_output if monitor_output else None,
-        stderr=subprocess.DEVNULL,
-        shell=is_windows()
-    )
-
-    print("Waiting 5 seconds before starting the experiment...")
-    time.sleep(5)
 
     print(f"Starting the experiment: {args.executable}")
     experiment_proc = subprocess.Popen(
         [args.executable],
-        shell=is_windows()
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
     )
 
+    process = psutil.Process(experiment_proc.pid)
+
+    print(f"Monitoring process {experiment_proc.pid} for {args.duration} seconds...")
+    with open(args.log_file, "w") as log:
+        log.write("time_sec,memory_mb\n")
+        for t in range(args.duration):
+            if experiment_proc.poll() is not None:
+                print("Experiment process ended early.")
+                break
+            try:
+                rss = process.memory_info().rss / (1024 * 1024)  # bytes to MB
+            except psutil.NoSuchProcess:
+                rss = 0
+            log.write(f"{t},{rss:.6f}\n")
+            time.sleep(1)
+
+    print("\nStopping process...")
     try:
-        remaining_time = args.duration - 5
-        if remaining_time > 0:
-            time.sleep(remaining_time)
-        else:
-            print("Warning: Duration too short. Stopping immediately.")
-    finally:
-        print("\nStopping processes...")
-
         experiment_proc.send_signal(signal.SIGINT)
-        monitor_proc.send_signal(signal.SIGINT)
-
         time.sleep(1)
         experiment_proc.kill()
-        monitor_proc.kill()
+    except Exception:
+        pass
 
-        if monitor_output:
-            monitor_output.close()
-
-        print("Done.")
+    print("Done.")
 
 if __name__ == "__main__":
     main()
