@@ -1,64 +1,50 @@
 import matplotlib.pyplot as plt
+import csv
 import argparse
-import platform
 
-def parse_mem_field(field):
-    try:
-        if field.endswith("M"):
-            return float(field[:-1])
-        elif field.endswith("K"):
-            return float(field[:-1]) / 1024
-        elif field.endswith("G"):
-            return float(field[:-1]) * 1024
-        elif field.endswith("B"):
-            return 0.0
-        else:
-            return int(field) / 1024
-    except (ValueError, IndexError):
-        return 0.0
-
-def parse_top_output(log_file, process_name):
+def parse_monitor_output(log_file):
     memory_usage = []
     timestamps = []
-    current_time = 0
 
     with open(log_file, "r") as f:
-        for line in f:
-            if process_name in line:
-                parts = line.split()
-                if len(parts) < 6:
-                    continue
-                mem_mb = parse_mem_field(parts[5])
+        reader = csv.reader(f)
+        header = next(reader, None)  # Skip header
+        for row in reader:
+            if len(row) != 2:
+                continue
+            try:
+                time_sec = int(row[0])
+                mem_mb = float(row[1])
+                timestamps.append(time_sec)
                 memory_usage.append(mem_mb)
-                timestamps.append(current_time)
-                current_time += 1
+            except ValueError:
+                continue
     return timestamps, memory_usage
 
-def plot_memory_usage(timestamps, memory_usage, process_name, output_file):
+def plot_memory_usage(timestamps, memory_usage, output_file):
     plt.figure(figsize=(10,6))
     plt.plot(timestamps, memory_usage, marker='o', linestyle='-')
-    plt.title(f"Memory usage of {process_name}")
-    plt.xlabel("Monitoring interval")
-    plt.ylabel("Memory (MB)")
+    plt.title("Heap Memory Usage Over Time")
+    plt.xlabel("Elapsed Time (seconds)")
+    plt.ylabel("Memory Usage (MB)")
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(output_file)
     print(f"Plot saved to {output_file}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Plot memory usage from top log.")
-    parser.add_argument("--log-file", required=True, help="Log file created by monitor.py with top output")
-    parser.add_argument("--process-name", required=True, help="Name of the process to track")
+    parser = argparse.ArgumentParser(description="Plot memory usage over time from monitor output.")
+    parser.add_argument("--log-file", required=True, help="CSV log file created by monitor.py")
     parser.add_argument("--output", required=True, help="Output PNG file")
     args = parser.parse_args()
 
-    timestamps, memory_usage = parse_top_output(args.log_file, args.process_name)
+    timestamps, memory_usage = parse_monitor_output(args.log_file)
 
     if not timestamps:
-        print(f"No data found for process {args.process_name}")
+        print(f"No data found in {args.log_file}")
         return
 
-    plot_memory_usage(timestamps, memory_usage, args.process_name, args.output)
+    plot_memory_usage(timestamps, memory_usage, args.output)
 
 if __name__ == "__main__":
     main()

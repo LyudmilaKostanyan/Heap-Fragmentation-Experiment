@@ -28,7 +28,7 @@ def main():
                 print("Experiment process ended early.")
                 break
             try:
-                rss = process.memory_info().rss / (1024 * 1024)  # bytes to MB
+                rss = process.memory_info().rss / (1024 * 1024)
             except psutil.NoSuchProcess:
                 rss = 0
             log.write(f"{t},{rss:.6f}\n")
