@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload heap plot artifact (only on Ubuntu)
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: heap-fragmentation-plot-${{ matrix.build.cpp_compiler }}
           path: heap_plot.png
