@@ -57,7 +57,7 @@ jobs:
       - name: Run
         shell: bash
         run: |
-          python3 monitor.py --duration 20 --executable ./build/main --log-file monitor_output.txt
+          python3 monitor.py --duration 60 --executable ./build/main --log-file monitor_output.txt
           python3 plot_log.py --log-file monitor_output.txt --process-name main --output heap_plot.png
 
       - name: Upload heap fragmentation graphic

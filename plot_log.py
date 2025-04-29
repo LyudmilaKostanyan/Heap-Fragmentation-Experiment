@@ -3,7 +3,6 @@ import argparse
 import platform
 
 def parse_mem_field(field):
-    """Parse memory field from top output, e.g., 1.9M, 300K, 0B, or 123456 (assumed KB)."""
     try:
         if field.endswith("M"):
             return float(field[:-1])
@@ -14,7 +13,7 @@ def parse_mem_field(field):
         elif field.endswith("B"):
             return 0.0
         else:
-            return int(field) / 1024  # assume KB
+            return int(field) / 1024
     except (ValueError, IndexError):
         return 0.0
 
@@ -38,8 +37,8 @@ def parse_top_output(log_file, process_name):
 def plot_memory_usage(timestamps, memory_usage, process_name, output_file):
     plt.figure(figsize=(10,6))
     plt.plot(timestamps, memory_usage, marker='o', linestyle='-')
-    plt.title(f"Memory usage of {process_name} over time")
-    plt.xlabel("Time (seconds)")
+    plt.title(f"Memory usage of {process_name}")
+    plt.xlabel("Monitoring interval")
     plt.ylabel("Memory (MB)")
     plt.grid(True)
     plt.tight_layout()
@@ -47,7 +46,7 @@ def plot_memory_usage(timestamps, memory_usage, process_name, output_file):
     print(f"Plot saved to {output_file}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Plot memory usage over time from top log.")
+    parser = argparse.ArgumentParser(description="Plot memory usage from top log.")
     parser.add_argument("--log-file", required=True, help="Log file created by monitor.py with top output")
     parser.add_argument("--process-name", required=True, help="Name of the process to track")
     parser.add_argument("--output", required=True, help="Output PNG file")
