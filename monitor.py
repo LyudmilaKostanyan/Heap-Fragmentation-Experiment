@@ -12,6 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run monitor, wait 5s, then run heap fragmentation experiment.")
     parser.add_argument("--duration", type=int, required=True, help="Total duration to run (seconds)")
     parser.add_argument("--executable", type=str, default="./build/main", help="Path to the executable")
+    parser.add_argument("--log-file", type=str, default=None, help="Optional: file to save monitor output")
     args = parser.parse_args()
 
     if is_windows():
@@ -19,10 +20,21 @@ def main():
         monitor_cmd = ["powershell", "-Command", "while ($true) { Get-Process | Out-String; Start-Sleep -Seconds 1 }"]
     else:
         print("Starting top to monitor memory (Linux/macOS)...")
-        monitor_cmd = ["top", "-b", "-d", "1"]
+        if args.log_file:
+            monitor_cmd = ["top", "-b", "-d", "1"]
+        else:
+            monitor_cmd = ["top", "-d", "1"]
+
+    if args.log_file:
+        monitor_output = open(args.log_file, "w")
+        print(f"Monitor output will be saved to {args.log_file}")
+    else:
+        monitor_output = None
 
     monitor_proc = subprocess.Popen(
         monitor_cmd,
+        stdout=monitor_output if monitor_output else None,
+        stderr=subprocess.DEVNULL,
         shell=is_windows()
     )
 
@@ -50,6 +62,9 @@ def main():
         time.sleep(1)
         experiment_proc.kill()
         monitor_proc.kill()
+
+        if monitor_output:
+            monitor_output.close()
 
         print("Done.")
 

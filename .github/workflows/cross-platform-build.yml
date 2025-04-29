@@ -31,6 +31,13 @@ jobs:
         shell: bash
         run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+      - name: Install Python dependencies (only for Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip procps
+          pip3 install matplotlib
+
       - name: Configure CMake
         shell: bash
         run: |
@@ -52,7 +59,21 @@ jobs:
             cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
           fi
 
-      - name: Run monitor.py
+      - name: Run monitor.py (only on Ubuntu)
+        if: runner.os == 'Linux'
         shell: bash
         run: |
-          python3 monitor.py --duration 15
+          python3 monitor.py --duration 20 --executable ./build/main --log-file monitor_output.txt
+
+      - name: Generate memory usage plot (only on Ubuntu)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python3 plot_log.py --log-file monitor_output.txt --process-name main --output heap_plot.png
+
+      - name: Upload heap plot artifact (only on Ubuntu)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v3
+        with:
+          name: heap-fragmentation-plot-${{ matrix.build.cpp_compiler }}
+          path: heap_plot.png
