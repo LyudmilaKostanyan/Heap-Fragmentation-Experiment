@@ -8,6 +8,9 @@ import platform
 def is_windows():
     return platform.system().lower() == "windows"
 
+def is_macos():
+    return platform.system().lower() == "darwin"
+
 def main():
     parser = argparse.ArgumentParser(description="Run monitor, wait 5s, then run heap fragmentation experiment.")
     parser.add_argument("--duration", type=int, required=True, help="Total duration to run (seconds)")
@@ -18,8 +21,12 @@ def main():
     if is_windows():
         print("Starting Get-Process to monitor memory (Windows)...")
         monitor_cmd = ["powershell", "-Command", "while ($true) { Get-Process | Out-String; Start-Sleep -Seconds 1 }"]
+    elif is_macos():
+        snapshots = max(args.duration, 1)
+        print(f"Starting top on macOS with {snapshots} snapshots...")
+        monitor_cmd = ["top", "-l", str(snapshots), "-s", "1"]
     else:
-        print("Starting top to monitor memory (Linux/macOS)...")
+        print("Starting top to monitor memory (Linux)...")
         if args.log_file:
             monitor_cmd = ["top", "-b", "-d", "1"]
         else:

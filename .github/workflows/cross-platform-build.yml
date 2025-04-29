@@ -31,49 +31,37 @@ jobs:
         shell: bash
         run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-      - name: Install Python dependencies (only for Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Install Python dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip procps
+          sudo apt update || true
+          sudo apt install -y python3-pip procps || true
           pip3 install matplotlib
 
       - name: Configure CMake
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            cmake -S . -B "$(cygpath -u "${{ steps.strings.outputs.build-output-dir }}")" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          else
-            cmake -S . -B ${{ steps.strings.outputs.build-output-dir }} \
-              -DCMAKE_C_COMPILER=${{ matrix.build.c_compiler }} \
-              -DCMAKE_CXX_COMPILER=${{ matrix.build.cpp_compiler }} \
-              -DCMAKE_BUILD_TYPE=Release
-          fi
+          cmake -S . -B ${{ steps.strings.outputs.build-output-dir }} \
+            -DCMAKE_C_COMPILER=${{ matrix.build.c_compiler }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.build.cpp_compiler }} \
+            -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            cmake --build "$(cygpath -u "${{ steps.strings.outputs.build-output-dir }}")" --config Release
-          else
-            cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
-          fi
+          cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
 
-      - name: Run monitor.py (only on Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Run monitor.py
         shell: bash
         run: |
           python3 monitor.py --duration 20 --executable ./build/main --log-file monitor_output.txt
 
-      - name: Generate memory usage plot (only on Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Generate memory usage plot
         shell: bash
         run: |
           python3 plot_log.py --log-file monitor_output.txt --process-name main --output heap_plot.png
 
-      - name: Upload heap plot artifact (only on Ubuntu)
-        if: runner.os == 'Linux'
+      - name: Upload heap plot artifact
         uses: actions/upload-artifact@v4
         with:
-          name: heap-fragmentation-plot-${{ matrix.build.cpp_compiler }}
+          name: heap-fragmentation-plot-${{ matrix.build.cpp_compiler }}-${{ runner.os }}
           path: heap_plot.png
